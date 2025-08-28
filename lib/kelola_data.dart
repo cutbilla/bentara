@@ -1,9 +1,8 @@
-import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:csv/csv.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:file_picker/file_picker.dart';
+
+import 'data_service.dart'; // pake service yg udah kamu buat
 
 class KelolaDataPage extends StatefulWidget {
   const KelolaDataPage({super.key});
@@ -21,54 +20,61 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
     _loadCSV();
   }
 
+  // ======== LOAD CSV via DataService ========
   Future<void> _loadCSV() async {
     try {
-      final rawData = await rootBundle.loadString("assets/data/data.csv");
-      final rows = const CsvToListConverter().convert(rawData);
-
+      final rows = await DataService.loadData();
       setState(() {
         _jumlahData = rows.length > 1 ? rows.length - 1 : 0; // skip header
       });
+    } catch (_) {
+      setState(() => _jumlahData = 0);
+    }
+  }
+
+  // ======== UPLOAD (pakai DataService) ========
+  Future<void> _uploadCSV() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv', 'xlsx'],
+    );
+    if (result == null || result.files.single.path == null) return;
+
+    final picked = File(result.files.single.path!);
+
+    try {
+      // parsing isi file (csv/xlsx)
+      final rows = await DataService.parseFile(picked);
+
+      // validasi jumlah kolom
+      final wrong = rows.indexWhere((r) => r.length != DataService.expectedHeader.length);
+      if (wrong != -1) {
+        _showSnackBar("Jumlah kolom di baris ${wrong + 1} tidak sesuai template.");
+        return;
+      }
+
+      // simpan data ke lokal
+      await DataService.saveData(rows);
+
+      _showSnackBar("Upload data berhasil!");
+      _loadCSV();
     } catch (e) {
-      setState(() {
-        _jumlahData = 0;
-      });
+      _showSnackBar("Gagal memproses file: $e");
     }
   }
 
-  Future<void> _updateData() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final path = "${directory.path}/data.csv";
-    final file = File(path);
-
-    List<List<dynamic>> rows = [];
-
-    if (await file.exists()) {
-      final csvContent = await file.readAsString();
-      rows = const CsvToListConverter().convert(csvContent);
-    } else {
-      rows.add(["id", "nama", "lokasi"]);
-    }
-
-    rows.add([rows.length, "Trafo Baru", "Lokasi X"]);
-    final csv = const ListToCsvConverter().convert(rows);
-    await file.writeAsString(csv);
-
-    _loadCSV();
-  }
-
+  // ======== HAPUS DATA ========
   Future<void> _bersihkanData() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final path = "${directory.path}/data.csv"; // <-- aku benerin path biar ga nyasar
-    final file = File(path);
+    await DataService.clearData();
+    setState(() => _jumlahData = 0);
+    _showSnackBar("Semua data terhapus!");
+  }
 
-    if (await file.exists()) {
-      await file.delete();
-    }
-
-    setState(() {
-      _jumlahData = 0;
-    });
+  // ======== SNACKBAR ========
+  void _showSnackBar(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
   }
 
   // ======== POPUP UPLOAD ========
@@ -103,12 +109,12 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
                   ),
                   onPressed: () {
                     Navigator.pop(context);
-                    _updateData();
+                    _uploadCSV();
                   },
                   child: const Text("Upload data"),
                 ),
                 const SizedBox(height: 8),
-                const Text("*Pastikan file dalam bentuk .CSV", style: TextStyle(fontSize: 12)),
+                const Text("*CSV (.csv) atau Excel (.xlsx)", style: TextStyle(fontSize: 12)),
               ],
             ),
           ),
@@ -168,6 +174,7 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
     );
   }
 
+  // ======== UI ========
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,14 +210,20 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
               const SizedBox(height: 30),
 
               // Judul
-              const Text(
-                "Kelola Data",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF395886),
-                ),
-                textAlign: TextAlign.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.table_chart, color: Color(0xFF395886), size: 50),
+                  SizedBox(width: 8),
+                  Text(
+                    "Kelola Data",
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF395886),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 40),
@@ -232,7 +245,7 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.bar_chart, size: 100, color: Color(0xFF395886)),
+                    const Icon(Icons.bar_chart, size: 70, color: Color(0xFF395886)),
                     const SizedBox(width: 20),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +254,7 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
                           "Jumlah Data Trafo",
                           style: TextStyle(
                             fontSize: 20,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                             color: Color(0xFF395886),
                           ),
                         ),
@@ -249,7 +262,7 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
                         Text(
                           "$_jumlahData data",
                           style: const TextStyle(
-                            fontSize: 45,
+                            fontSize: 35,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF395886),
                           ),
@@ -262,7 +275,7 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
 
               const SizedBox(height: 40),
 
-              // Tombol Update Data (pakai popup)
+              // Tombol Update Data
               Align(
                 alignment: Alignment.center,
                 child: SizedBox(
@@ -283,7 +296,7 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
 
               const SizedBox(height: 20),
 
-              // Tombol Bersihkan Data (pakai popup)
+              // Tombol Bersihkan Data
               Align(
                 alignment: Alignment.center,
                 child: SizedBox(

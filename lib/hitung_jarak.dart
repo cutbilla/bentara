@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:csv/csv.dart';
 import 'dart:math';
 import 'package:dropdown_search/dropdown_search.dart'; 
+import 'data_service.dart';
 
 class Trafo {
   final String unitUp;
@@ -80,11 +79,9 @@ class _HitungJarakPageState extends State<HitungJarakPage> {
   }
 
   Future<void> loadCsvData() async {
-    final rawData = await rootBundle.loadString("assets/data/data.csv");
-    List<List<dynamic>> csvTable = const CsvToListConverter().convert(rawData);
-
+    final rows = await DataService.loadData(); // ambil dari DataService
     setState(() {
-      daftarTrafo = csvTable.skip(1).map((row) => Trafo.fromCsv(row)).toList();
+      daftarTrafo = rows.skip(1).map((row) => Trafo.fromCsv(row)).toList();
       selectedTrafo = null;
     });
   }
@@ -307,7 +304,7 @@ class _HitungJarakPageState extends State<HitungJarakPage> {
 
               if (jarak != null)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(

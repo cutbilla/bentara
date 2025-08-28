@@ -5,7 +5,6 @@ import 'cari_gardu.dart';
 import 'kelola_data.dart';
 import 'informasi_ulp.dart';
 
-
 void main() {
   runApp(const MyApp());
 }

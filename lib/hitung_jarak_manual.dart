@@ -243,7 +243,7 @@ class _HitungJarakManualPageState extends State<HitungJarakManualPage> {
               if (jarak != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 100, vertical: 50),
+                      horizontal: 50, vertical: 20),
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -273,7 +273,7 @@ class _HitungJarakManualPageState extends State<HitungJarakManualPage> {
                         Text(
                           "${jarak!.toStringAsFixed(2)} km",
                           style: const TextStyle(
-                            fontSize: 36,
+                            fontSize: 35,
                             fontFamily: 'Sen',
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF395886),

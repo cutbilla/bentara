@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:csv/csv.dart';
 import 'dart:math';
+import 'data_service.dart';
 
 class Trafo {
   final String unitUp;
@@ -79,11 +78,9 @@ class _CariTrafoPageState extends State<CariTrafoPage> {
   }
 
   Future<void> loadCsvData() async {
-    final rawData = await rootBundle.loadString("assets/data/data.csv");
-    List<List<dynamic>> csvTable = const CsvToListConverter().convert(rawData);
-
+    final rows = await DataService.loadData(); // ambil dari DataService
     setState(() {
-      daftarTrafo = csvTable.skip(1).map((row) => Trafo.fromCsv(row)).toList();
+      daftarTrafo = rows.skip(1).map((row) => Trafo.fromCsv(row)).toList();
     });
   }
 
@@ -235,9 +232,9 @@ class _CariTrafoPageState extends State<CariTrafoPage> {
                     ),
                     child: isLoading
                         ? const SizedBox(
-                            width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                            width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2))
                         : const Text("Cari Gardu Terdekat",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(width: 16),
                   ElevatedButton.icon(
@@ -249,9 +246,9 @@ class _CariTrafoPageState extends State<CariTrafoPage> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                       elevation: 4,
                     ),
-                    icon: const Icon(Icons.refresh, size: 18),
+                    icon: const Icon(Icons.refresh, size: 15),
                     label: const Text("Refresh",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),

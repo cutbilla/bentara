@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'hitung_jarak_manual.dart'; 
+import 'splash.dart'; 
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'Sen',
       ),
-      home: const HitungJarakManualPage(), 
+      home: const SplashPage(), 
     );
   }
 }
