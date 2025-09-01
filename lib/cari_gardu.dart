@@ -14,7 +14,7 @@ class Trafo {
   final String pemakaian;
   final String iRataRata;
   final String unbalanced;
-  final String updateUsd;
+  final String update;
 
   Trafo({
     required this.unitUp,
@@ -28,7 +28,7 @@ class Trafo {
     required this.pemakaian,
     required this.iRataRata,
     required this.unbalanced,
-    required this.updateUsd,
+    required this.update,
   });
 
   factory Trafo.fromCsv(List<dynamic> row) {
@@ -44,7 +44,7 @@ class Trafo {
       pemakaian: row[8].toString(),
       iRataRata: row[9].toString(),
       unbalanced: row[10].toString(),
-      updateUsd: row.length > 11 ? row[11].toString() : "",
+      update: row.length > 11 ? row[11].toString() : "",
     );
   }
 }
@@ -365,7 +365,7 @@ class _CariTrafoPageState extends State<CariTrafoPage> {
                 _buildInfoRow('Latitude', trafo.latitude.toString()),
                 _buildInfoRow('Longitude', trafo.longitude.toString()),
                 _buildInfoRow('ULP', trafo.unitUp),
-                _buildInfoRow('Update', trafo.updateUsd),
+                _buildInfoRow('Update', trafo.update),
                 _buildInfoRow('Jarak', '${jarak.toStringAsFixed(2)} km'),
               ],
             ),

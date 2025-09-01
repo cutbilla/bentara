@@ -1,8 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-
-import 'data_service.dart'; // pake service yg udah kamu buat
+import 'data_service.dart'; // path sesuai proyekmu
 
 class KelolaDataPage extends StatefulWidget {
   const KelolaDataPage({super.key});
@@ -13,6 +12,8 @@ class KelolaDataPage extends StatefulWidget {
 
 class _KelolaDataPageState extends State<KelolaDataPage> {
   int _jumlahData = 0;
+  String? _fileName;
+  String? _tanggal;
 
   @override
   void initState() {
@@ -20,20 +21,31 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
     _loadCSV();
   }
 
-  // ======== LOAD CSV via DataService ========
   Future<void> _loadCSV() async {
     try {
       final rows = await DataService.loadData();
+      final meta = await DataService.loadMetadata(); // 🔹 ambil metadata juga
       setState(() {
-        _jumlahData = rows.length > 1 ? rows.length - 1 : 0; // skip header
+        _jumlahData = rows.length > 1 ? rows.length - 1 : 0;
+        _fileName = meta['fileName'];
+        _tanggal = meta['tanggal'];
       });
     } catch (_) {
-      setState(() => _jumlahData = 0);
+      setState(() {
+        _jumlahData = 0;
+        _fileName = null;
+        _tanggal = null;
+      });
     }
   }
 
-  // ======== UPLOAD (pakai DataService) ========
   Future<void> _uploadCSV() async {
+    // 🔹 cek dulu apakah ada data lama
+    if (_jumlahData > 0) {
+      _showSnackBar("Data lama masih ada! Harap bersihkan dulu sebelum upload baru.");
+      return;
+    }
+
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['csv', 'xlsx'],
@@ -43,8 +55,10 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
     final picked = File(result.files.single.path!);
 
     try {
-      // parsing isi file (csv/xlsx)
-      final rows = await DataService.parseFile(picked);
+      final parsed = await DataService.parseFile(picked);
+      final rows = parsed['rows'] as List<List<dynamic>>;
+      final fileName = parsed['fileName'] as String;
+      final tanggal = parsed['tanggal'] as String;
 
       // validasi jumlah kolom
       final wrong = rows.indexWhere((r) => r.length != DataService.expectedHeader.length);
@@ -53,8 +67,13 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
         return;
       }
 
-      // simpan data ke lokal
       await DataService.saveData(rows);
+      await DataService.saveMetadata(fileName, tanggal); // 🔹 simpan metadata
+
+      setState(() {
+        _fileName = fileName;
+        _tanggal = tanggal;
+      });
 
       _showSnackBar("Upload data berhasil!");
       _loadCSV();
@@ -63,118 +82,23 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
     }
   }
 
-  // ======== HAPUS DATA ========
   Future<void> _bersihkanData() async {
     await DataService.clearData();
-    setState(() => _jumlahData = 0);
+    await DataService.clearMetadata(); // 🔹 hapus metadata juga
+    setState(() {
+      _jumlahData = 0;
+      _fileName = null;
+      _tanggal = null;
+    });
     _showSnackBar("Semua data terhapus!");
   }
 
-  // ======== SNACKBAR ========
   void _showSnackBar(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg)),
     );
   }
 
-  // ======== POPUP UPLOAD ========
-  void _showUploadDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE6F4FF),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.cloud_upload, size: 80, color: Color(0xFF395886)),
-                const SizedBox(height: 10),
-                const Text(
-                  "Masukkan Data Baru",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF395886)),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF395886),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _uploadCSV();
-                  },
-                  child: const Text("Upload data"),
-                ),
-                const SizedBox(height: 8),
-                const Text("*CSV (.csv) atau Excel (.xlsx)", style: TextStyle(fontSize: 12)),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ======== POPUP HAPUS ========
-  void _showHapusDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.red.shade100,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.delete_forever, size: 80, color: Colors.red),
-                const SizedBox(height: 10),
-                const Text(
-                  "Semua Data Akan Terhapus",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  "Yakin ingin tetap melakukan pembersihan data?",
-                  style: TextStyle(color: Colors.black87),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _bersihkanData();
-                  },
-                  child: const Text("Hapus data"),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // ======== UI ========
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -206,7 +130,6 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 30),
 
               // Judul
@@ -225,10 +148,9 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 40),
 
-              // Card jumlah data trafo
+              // Card jumlah data trafo + info file
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 padding: const EdgeInsets.all(20),
@@ -243,31 +165,81 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
                     ),
                   ],
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.bar_chart, size: 70, color: Color(0xFF395886)),
-                    const SizedBox(width: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
                       children: [
-                        const Text(
-                          "Jumlah Data Trafo",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF395886),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "$_jumlahData data",
-                          style: const TextStyle(
-                            fontSize: 35,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF395886),
-                          ),
+                        const Icon(Icons.bar_chart, size: 70, color: Color(0xFF395886)),
+                        const SizedBox(width: 20),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Jumlah Data Trafo",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF395886),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              "$_jumlahData data",
+                              style: const TextStyle(
+                                fontSize: 35,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF395886),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: "Nama File : ",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF395886),
+                            ),
+                          ),
+                          TextSpan(
+                            text: _fileName ?? '-',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.normal,
+                              color: Color(0xFF395886),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: "Tanggal : ",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF395886),
+                            ),
+                          ),
+                          TextSpan(
+                            text: _tanggal ?? '-',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.normal,
+                              color: Color(0xFF395886),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -275,19 +247,22 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
 
               const SizedBox(height: 40),
 
-              // Tombol Update Data
+              // Tombol Upload Data
               Align(
                 alignment: Alignment.center,
                 child: SizedBox(
-                  width: 230,
+                  width: 250,
                   child: ElevatedButton.icon(
-                    onPressed: _showUploadDialog,
+                    onPressed: _uploadCSV,
                     icon: const Icon(Icons.upload, size: 25),
-                    label: const Text("Update data", style: TextStyle(fontSize: 20)),
+                    label: const Text(
+                      "Upload Data Gardu",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF86E49F),
                       foregroundColor: const Color(0xFF395886),
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                   ),
@@ -300,15 +275,18 @@ class _KelolaDataPageState extends State<KelolaDataPage> {
               Align(
                 alignment: Alignment.center,
                 child: SizedBox(
-                  width: 230,
+                  width: 250,
                   child: ElevatedButton.icon(
-                    onPressed: _showHapusDialog,
+                    onPressed: _bersihkanData,
                     icon: const Icon(Icons.delete_forever, size: 25),
-                    label: const Text("Bersihkan data", style: TextStyle(fontSize: 20)),
+                    label: const Text(
+                      "Bersihkan data",
+                      style: TextStyle(fontSize: 20),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFA5B5B),
                       foregroundColor: const Color(0xFFFFFFD5),
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     ),
                   ),

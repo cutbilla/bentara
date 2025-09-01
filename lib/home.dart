@@ -4,6 +4,8 @@ import 'hitung_jarak_manual.dart';
 import 'cari_gardu.dart';
 import 'kelola_data.dart';
 import 'informasi_ulp.dart';
+import 'panduan.dart';
+import 'tentang.dart'; // Tambahan halaman Tentang
 
 void main() {
   runApp(const MyApp());
@@ -112,7 +114,7 @@ class HomePage extends StatelessWidget {
                   children: [
                     _menuCard(
                       icon: Icons.location_on,
-                      title: "Hitung Jarak",
+                      title: "Hitung Jarak \n(Parameter Gardu)",
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -151,12 +153,12 @@ class HomePage extends StatelessWidget {
                     const SizedBox(height: 10),
                     _menuCard(
                       icon: Icons.article,
-                      title: "Informasi ULP",
+                      title: "Letak Astronomis &\nDaerah Administratif Unit",
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const InformasiULPPage(),
+                            builder: (context) => const ULPPage(),
                           ),
                         );
                       },
@@ -235,36 +237,57 @@ class HomePage extends StatelessWidget {
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly, // biar rata
         children: [
-          _bottomItem(
-            Icons.menu_book,
-            "Panduan\nPenggunaan",
-            () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PanduanPage(),
-                ),
-              );
-            },
+          Expanded(
+            child: _bottomItem(
+              Icons.help_outline,
+              "Panduan\nPengguna",
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PanduanPage(),
+                  ),
+                );
+              },
+            ),
           ),
-          _bottomItem(
-            Icons.table_chart,
-            "Kelola\nData",
-            () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const KelolaDataPage(),
-                ),
-              );
-            },
+          const SizedBox(width: 16), // jarak antar button
+          Expanded(
+            child: _bottomItem(
+              Icons.table_chart,
+              "Kelola\nData",
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const KelolaDataPage(),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 16), // jarak antar button
+          Expanded(
+            child: _bottomItem(
+              Icons.info_outline,
+              "Tentang",
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TentangPage(),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
+
 
   Widget _bottomItem(IconData icon, String label, VoidCallback onPressed) {
     return GestureDetector(
@@ -292,19 +315,3 @@ class HomePage extends StatelessWidget {
     );
   }
 }
-
-// ================== Dummy Pages ==================
-
-class PanduanPage extends StatelessWidget {
-  const PanduanPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Panduan Penggunaan")),
-      body: const Center(child: Text("Isi panduan penggunaan di sini")),
-    );
-  }
-}
-
-

@@ -15,7 +15,7 @@ class Trafo {
   final String pemakaian;
   final String iRataRata;
   final String unbalanced;
-  final String updateUsd07;
+  final String update;
 
   Trafo({
     required this.unitUp,
@@ -29,7 +29,7 @@ class Trafo {
     required this.pemakaian,
     required this.iRataRata,
     required this.unbalanced,
-    required this.updateUsd07,
+    required this.update,
   });
 
   factory Trafo.fromCsv(List<dynamic> row) {
@@ -48,7 +48,7 @@ class Trafo {
       pemakaian: row[8].toString(),
       iRataRata: row[9].toString(),
       unbalanced: row[10].toString(),
-      updateUsd07: row[11].toString(),
+      update: row[11].toString(),
     );
   }
 
@@ -146,7 +146,7 @@ class _HitungJarakPageState extends State<HitungJarakPage> {
                   Icon(Icons.location_on, color: Color(0xFF395886), size: 50),
                   SizedBox(width: 8),
                   Text(
-                    "Hitung Jarak",
+                    "Hitung Jarak \n(Parameter Gardu)",
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w800,
@@ -199,7 +199,6 @@ class _HitungJarakPageState extends State<HitungJarakPage> {
                 ),
               ),
 
-
               const SizedBox(height: 20),
 
               if (selectedTrafo != null)
@@ -220,6 +219,8 @@ class _HitungJarakPageState extends State<HitungJarakPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        _infoRow("Latitude", selectedTrafo!.latitude.toString()),
+                        _infoRow("Longitude", selectedTrafo!.longitude.toString()),
                         _infoRow("Unit UP", selectedTrafo!.unitUp),
                         _infoRow("Nomor Gardu", selectedTrafo!.nomorGardu),
                         _infoRow("Nama Gardu", selectedTrafo!.namaGardu),
@@ -229,7 +230,7 @@ class _HitungJarakPageState extends State<HitungJarakPage> {
                         _infoRow("Pemakaian (%)", selectedTrafo!.pemakaian),
                         _infoRow("I rata-rata (A)", selectedTrafo!.iRataRata),
                         _infoRow("Unbalanced (%)", selectedTrafo!.unbalanced),
-                        _infoRow("Update USD.07", selectedTrafo!.updateUsd07),
+                        _infoRow("Update", selectedTrafo!.update),
                       ],
                     ),
                   ),
