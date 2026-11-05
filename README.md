@@ -1,16 +1,20 @@
-# bentara
+# BENTARA (Kalkulator Bentangan)
 
-A new Flutter project.
+BENTARA merupakan aplikasi berbasis Flutter yang dikembangkan untuk membantu perhitungan jarak dan pencarian rekomendasi gardu listrik berdasarkan koordinat geografis.
 
-## Getting Started
+## Tujuan
+Membantu proses pencarian gardu listrik berdasarkan lokasi pelanggan serta memberikan informasi jarak dan kesesuaian gardu.
 
-This project is a starting point for a Flutter application.
+## Teknologi
+- Flutter
+- Dart
+- CSV
+- Haversine Formula
+- Content-Based Filtering (CBF)
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Fitur Utama
+- Perhitungan jarak antar koordinat geografis.
+- Pencarian gardu terdekat.
+- Rekomendasi gardu listrik.
+- Konversi koordinat DD dan DMS.
+- Pengelolaan data gardu menggunakan CSV.
